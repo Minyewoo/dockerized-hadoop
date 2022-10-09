@@ -1,9 +1,9 @@
 FROM openjdk:8-jre-slim
 
-LABEL maintainer="cgiraldo@gradiant.org" \
-      organization="gradiant.org"
+LABEL maintainer="const.trushov@gmail.com" \
+      organization="minyewoo.xyz"
 
-ARG version=2.7.7
+ARG version=3.3.4
 ENV HADOOP_VERSION=$version \
     HADOOP_PREFIX=/opt/hadoop \
     HADOOP_HOME=/opt/hadoop \
@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install -y curl procps && rm -rf /var/lib/apt/list
     mkdir -p /opt/hadoop/logs && \
     chown -R hdfs:hadoop /dfs && \
     chown -LR hdfs:hadoop /opt/hadoop
-   
+
 
 COPY entrypoint.sh /entrypoint.sh
 

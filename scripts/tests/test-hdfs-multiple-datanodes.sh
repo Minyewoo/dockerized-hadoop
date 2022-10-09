@@ -2,7 +2,7 @@
 
 set -ex
 
-IMAGE_NAME="${IMAGE_NAME:-gradiant/hdfs:2.7.7}"
+IMAGE_NAME="${IMAGE_NAME:-minyewoo/hadoop-sandbox:3.3.4}"
 
 IMAGE_TAG="${IMAGE_NAME#*:}"
 IMAGE_REPO="${IMAGE_NAME%:*}"
