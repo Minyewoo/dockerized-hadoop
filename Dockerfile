@@ -5,18 +5,16 @@ LABEL maintainer="const.trushov@gmail.com" \
 
 ARG version=3.3.4
 ENV HADOOP_VERSION=$version \
-    HADOOP_PREFIX=/opt/hadoop \
     HADOOP_HOME=/opt/hadoop \
     HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop \
     PATH=$PATH:/opt/hadoop/bin \
     MULTIHOMED_NETWORK=1 \
     CLUSTER_NAME=hadoop \
     HDFS_CONF_dfs_namenode_name_dir=file:///dfs/name \
-    HDFS_CONF_dfs_datanode_data_dir=file:///dfs/data \
-    USER=hdfs
+    HDFS_CONF_dfs_datanode_data_dir=file:///dfs/data 
 
 
-RUN apt-get update && apt-get install -y curl procps && rm -rf /var/lib/apt/lists/* && \
+RUN apt-get update && apt-get install -y curl procps ssh pdsh && rm -rf /var/lib/apt/lists/* && \
     curl -SL https://archive.apache.org/dist/hadoop/common/hadoop-$HADOOP_VERSION/hadoop-$HADOOP_VERSION.tar.gz | tar xvz -C /opt && \
     ln -s /opt/hadoop-$HADOOP_VERSION /opt/hadoop && \
     # remove documentation from container image
@@ -30,7 +28,6 @@ RUN apt-get update && apt-get install -y curl procps && rm -rf /var/lib/apt/list
     mkdir -p /opt/hadoop/logs && \
     chown -R hdfs:hadoop /dfs && \
     chown -LR hdfs:hadoop /opt/hadoop
-
 
 COPY entrypoint.sh /entrypoint.sh
 
@@ -46,5 +43,17 @@ EXPOSE 50070
 
 # HDFS 3.x web interface
 EXPOSE 9870
+
+#datanode
+EXPOSE 9864
+
+#historyserver
+EXPOSE 8188
+
+#nodemanager
+EXPOSE 8042
+
+#resourcemanager
+EXPOSE 8088
 
 ENTRYPOINT ["/entrypoint.sh"]

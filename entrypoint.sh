@@ -37,6 +37,8 @@ configure $HADOOP_CONF_DIR/yarn-site.xml yarn YARN_CONF
 configure $HADOOP_CONF_DIR/httpfs-site.xml httpfs HTTPFS_CONF
 configure $HADOOP_CONF_DIR/kms-site.xml kms KMS_CONF
 
+addProperty $HADOOP_CONF_DIR/hdfs-site.xml dfs.permissions false
+
 if [ "$MULTIHOMED_NETWORK" = "1" ]; then
     echo "Configuring for multihomed network"
 
@@ -58,33 +60,64 @@ if [ "$MULTIHOMED_NETWORK" = "1" ]; then
     addProperty $HADOOP_CONF_DIR/mapred-site.xml yarn.nodemanager.bind-host 0.0.0.0
 fi
 
-node_type=$1
+namedir=${HDFS_CONF_dfs_namenode_name_dir#"file://"}
+if [ ! -d $namedir ]; then
+  echo "Creating not existing namenode directory: $namedir"
+  mkdir -p $namedir
+fi
 
-case "$node_type" in
-    (namenode)
-        shift
-        namedir=${HDFS_CONF_dfs_namenode_name_dir#"file://"}
-        if [ ! -d $namedir ]; then
-          echo "Creating not existing namenode directory: $namedir"
-          mkdir -p $namedir
-        fi
-        if [ "`ls -A $namedir`" == "" ]; then
-          echo "Formatting namenode name directory: $namedir"
-          $HADOOP_HOME/bin/hdfs --config $HADOOP_CONF_DIR namenode -format $CLUSTER_NAME
-        fi
-        $HADOOP_HOME/bin/hdfs --config $HADOOP_CONF_DIR namenode $@
-      ;;
+if [ "`ls -A $namedir`" == "" ]; then
+  echo "Formatting namenode name directory: $namedir"
+  $HADOOP_HOME/bin/hdfs --config $HADOOP_CONF_DIR namenode -format $CLUSTER_NAME
+fi
 
-    (datanode)
-      shift
-        datadir=${HDFS_CONF_dfs_datanode_data_dir#"file://"}
-        if [ ! -d $datadir ]; then
-            echo "Creating not existing datanode directory: $datadir"
-            mkdir -p $datadir
-        fi
-        $HADOOP_HOME/bin/hdfs --config $HADOOP_CONF_DIR datanode $@
-      ;;
-    (*)
-      exec "$@"
-      ;;
-esac
+echo "Starting namemode"
+$HADOOP_HOME/bin/hdfs --config $HADOOP_CONF_DIR --daemon start namenode
+
+echo "Starting datanode"
+$HADOOP_HOME/bin/hdfs --config $HADOOP_CONF_DIR --daemon start datanode
+
+echo "Starting resourcemanager"
+$HADOOP_HOME/bin/yarn --config $HADOOP_CONF_DIR --daemon start resourcemanager
+
+echo "Starting nodemanager"
+$HADOOP_HOME/bin/yarn --config $HADOOP_CONF_DIR --daemon start nodemanager
+
+# echo "Starting proxyserver"
+# $HADOOP_HOME/bin/yarn --config $HADOOP_CONF_DIR --daemon start proxyserver
+
+echo "Starting historyserver"
+$HADOOP_HOME/bin/mapred --config $HADOOP_CONF_DIR --daemon start historyserver
+
+exec "$@"
+
+# node_type=$1
+
+# case "$node_type" in
+#     (namenode)
+#         shift
+#         namedir=${HDFS_CONF_dfs_namenode_name_dir#"file://"}
+#         if [ ! -d $namedir ]; then
+#           echo "Creating not existing namenode directory: $namedir"
+#           mkdir -p $namedir
+#         fi
+#         if [ "`ls -A $namedir`" == "" ]; then
+#           echo "Formatting namenode name directory: $namedir"
+#           $HADOOP_HOME/bin/hdfs --config $HADOOP_CONF_DIR namenode -format $CLUSTER_NAME
+#         fi
+#         $HADOOP_HOME/bin/hdfs --config $HADOOP_CONF_DIR namenode $@
+#       ;;
+
+#     (datanode)
+#       shift
+#         datadir=${HDFS_CONF_dfs_datanode_data_dir#"file://"}
+#         if [ ! -d $datadir ]; then
+#             echo "Creating not existing datanode directory: $datadir"
+#             mkdir -p $datadir
+#         fi
+#         $HADOOP_HOME/bin/hdfs --config $HADOOP_CONF_DIR datanode $@
+#       ;;
+#     (*)
+#       exec "$@"
+#       ;;
+# esac
